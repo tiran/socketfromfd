@@ -1,5 +1,5 @@
 include setup.py setup.cfg
-include LICENSE README
+include LICENSE README.md
 include *.ini .coveragerc
 
 include tests.py
