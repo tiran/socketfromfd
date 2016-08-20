@@ -20,7 +20,7 @@ setup(
     name='socketfromfd',
     description='socket.fromfd() with auto-detection of family and type',
     long_description=long_description,
-    version='0.1.dev1',
+    version='0.1.0',
     license='Apache License, Version 2.0',
     author='Christian Heimes',
     author_email='christian@python.org',
