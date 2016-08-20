@@ -1,0 +1,9 @@
+include setup.py setup.cfg
+include LICENSE README
+include *.ini .coveragerc
+
+include tests.py
+
+recursive-include docs *.py *.rst
+include docs/Makefile docs/make.bat
+
