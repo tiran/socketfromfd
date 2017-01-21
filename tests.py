@@ -31,6 +31,7 @@ class TestFromFD(unittest.TestCase):
             self.assertEqual(newsock.family, sock.family)
             self.assertEqual(newsock.type, sock.type)
             self.assertEqual(newsock.proto, sock.proto)
+            self.assertIsInstance(newsock, socket.socket)
         finally:
             newsock.close()
 

@@ -6,6 +6,7 @@ from __future__ import print_function
 import ctypes
 import os
 import socket
+import sys
 from ctypes.util import find_library
 
 __all__ = ('fromfd',)
@@ -72,4 +73,7 @@ def fromfd(fd):
     typ = _raw_getsockopt(fd, socket.SOL_SOCKET, SO_TYPE)
     proto = _raw_getsockopt(fd, socket.SOL_SOCKET, SO_PROTOCOL)
     sock = socket.fromfd(fd, family, typ, proto)
-    return sock
+    if sys.version_info.major == 2:
+        return socket.socket(None, None, None, _sock=sock)
+    else:
+        return sock
