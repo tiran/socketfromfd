@@ -35,6 +35,19 @@ class TestFromFD(unittest.TestCase):
         finally:
             newsock.close()
 
+        newsock = fromfd(sock.fileno(), keep_fd=False)
+        try:
+            if sys.version_info.major >= 3:
+                self.assertEqual(sock.fileno(), newsock.fileno())
+            else:
+                self.assertNotEqual(sock.fileno(), newsock.fileno())
+            self.assertEqual(newsock.family, sock.family)
+            self.assertEqual(newsock.type, sock.type)
+            self.assertEqual(newsock.proto, sock.proto)
+            self.assertIsInstance(newsock, socket.socket)
+        finally:
+            newsock.close()
+
     def _test_socket(self, family, typ, proto):
         sock = socket.socket(family, typ, proto)
         try:
@@ -60,6 +73,28 @@ class TestFromFD(unittest.TestCase):
             fromfd(sys.stdout.fileno())
         with self.assertRaises(OSError):
             fromfd(1000)
+
+    def _test_fromfd_network(self, keep_fd):
+        sock = socket.create_connection(('www.pythontest.net', 80))
+        newsock = None
+        try:
+            self.assertIn(sock.family, (socket.AF_INET, socket.AF_INET6))
+            self.assertEqual(sock.type, socket.SOCK_STREAM)
+            newsock = fromfd(sock.fileno(), keep_fd)
+            if keep_fd:
+                self.assertNotEqual(sock.fileno(), newsock.fileno())
+            elif sys.version_info.major >= 3:
+                self.assertEqual(sock.fileno(), newsock.fileno())
+            newsock.sendall(b'GET / HTTP/1.1\r\n\r\n')
+            newsock.recv(1024)
+        finally:
+            sock.close()
+            if newsock:
+                newsock.close()
+
+    def test_fromfd_keep_fd(self):
+        self._test_fromfd_network(True)
+        self._test_fromfd_network(False)
 
 
 if __name__ == '__main__':

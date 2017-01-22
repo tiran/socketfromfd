@@ -59,21 +59,35 @@ def _raw_getsockopt(fd, level, optname):
     return optval.value
 
 
-def fromfd(fd):
+def fromfd(fd, keep_fd=True):
     """Create a socket from a file descriptor
 
-    socket domain (family), type and protocol are auto-detected. The socket
-    uses a dup()ed fd. The original fd can be closed.
+    socket domain (family), type and protocol are auto-detected. By default
+    the socket uses a dup()ed fd. The original fd can be closed.
+
+    The parameter `keep_fd` influences fd duplication. Under Python 2 the
+    fd is still duplicated but the input fd is closed. Under Python 3 and
+    with `keep_fd=True`, the new socket object uses the same fd.
 
     :param fd: socket fd
+    :type fd: int
+    :param keep_fd: keep input fd
+    :type keep_fd: bool
     :return: socket.socket instance
     :raises OSError: for invalid socket fd
     """
     family = _raw_getsockopt(fd, socket.SOL_SOCKET, SO_DOMAIN)
     typ = _raw_getsockopt(fd, socket.SOL_SOCKET, SO_TYPE)
     proto = _raw_getsockopt(fd, socket.SOL_SOCKET, SO_PROTOCOL)
-    sock = socket.fromfd(fd, family, typ, proto)
     if sys.version_info.major == 2:
-        return socket.socket(None, None, None, _sock=sock)
-    else:
+        # Python 2 has no fileno argument and always duplicates the fd
+        sockobj = socket.fromfd(fd, family, typ, proto)
+        sock = socket.socket(None, None, None, _sock=sockobj)
+        if not keep_fd:
+            os.close(fd)
         return sock
+    else:
+        if keep_fd:
+            return socket.fromfd(fd, family, typ, proto)
+        else:
+            return socket.socket(family, typ, proto, fileno=fd)
