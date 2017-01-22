@@ -1,5 +1,6 @@
 # Copyright (C) 2016  Christian Heimes
 
+import errno
 import socket
 import sys
 import unittest
@@ -9,6 +10,19 @@ from socketfromfd import SO_DOMAIN, SO_PROTOCOL, SO_TYPE
 
 PROTO_TCP = socket.getprotobyname('tcp')
 PROTO_UDP = socket.getprotobyname('udp')
+
+
+def try_close(sock):
+    """Close socket and ignore bad file descriptor
+
+    Python 3.6 raises "OSError: [Errno 9] Bad file descriptor" when the
+    fd has already been closed.
+    """
+    try:
+        sock.close()
+    except OSError as e:
+        if e.errno != errno.EBADF:
+            raise
 
 
 class TestFromFD(unittest.TestCase):
@@ -53,7 +67,7 @@ class TestFromFD(unittest.TestCase):
         try:
             self.assert_socket(sock)
         finally:
-            sock.close()
+            try_close(sock)
 
     def test_unix(self):
         self._test_socket(socket.AF_UNIX, socket.SOCK_STREAM, 0)
@@ -90,7 +104,7 @@ class TestFromFD(unittest.TestCase):
         finally:
             sock.close()
             if newsock:
-                newsock.close()
+                try_close(newsock)
 
     def test_fromfd_keep_fd(self):
         self._test_fromfd_network(True)
